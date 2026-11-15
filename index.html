@@ -27,7 +27,7 @@ body{
 #scene.dragging{cursor:grabbing}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
 #hud > *{pointer-events:none}
-#panel,#physicsOverlay .phBox,#topRight .chipBtn,#physicsOverlay #phClose{pointer-events:auto}
+#panel,#topRight .chipBtn{pointer-events:auto}
 
 /* ---------- 标题 ---------- */
 #title{position:absolute;top:22px;left:26px}
@@ -146,6 +146,19 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
 .tRow{display:flex;justify-content:space-between;font-size:12.5px;font-weight:500;padding-top:7px;color:#d6dfe8}
 .tRow b{color:#fff;font-weight:600;font-size:12px}
 
+/* 面板内嵌遥测（替代原右下浮层；id 保留，app.js 继续按 tXxx 更新）
+   特异性高于媒体查询里的 #telemetry，避免继承手机端的 fixed 定位与 150px 宽度 */
+#panel #telemetry{
+  position:static;width:auto;max-width:none;right:auto;bottom:auto;top:auto;
+  background:none;border:none;border-radius:0;padding:0 0 10px;box-shadow:none
+}
+#panel #telemetry .tRow{padding-top:6px}
+
+/* 面板内嵌物理说明（替代原全屏浮层） */
+#physInline{padding:2px 0 12px}
+#physInline h3{font-size:12px;color:var(--accent2);margin:12px 0 5px;letter-spacing:.08em}
+#physInline p{font-size:11.5px;line-height:1.72;color:#b9c4d0;margin-bottom:6px}
+
 /* ---------- 提示 ---------- */
 #hint{
   position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
@@ -174,26 +187,6 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
   display:block;margin-top:5px;text-align:center;font-size:9px;letter-spacing:.22em;
   color:rgba(143,212,255,.9);text-shadow:0 0 6px rgba(0,0,0,.9)
 }
-
-/* ---------- 物理说明 ---------- */
-#physicsOverlay{
-  position:absolute;inset:0;background:rgba(0,0,0,.62);display:none;
-  align-items:center;justify-content:center;z-index:20;pointer-events:auto
-}
-#physicsOverlay.open{display:flex}
-.phBox{
-  width:min(720px,92vw);max-height:82vh;overflow-y:auto;position:relative;
-  background:rgba(10,14,20,.92);border:1px solid var(--line);border-radius:14px;
-  padding:26px 30px;background:rgba(10,14,20,.97)
-}
-.phBox h2{font-size:15px;letter-spacing:.3em;color:var(--accent);margin-bottom:14px}
-.phBox h3{font-size:12.5px;color:var(--accent2);margin:14px 0 6px;letter-spacing:.1em}
-.phBox p{font-size:12px;line-height:1.75;color:#b9c4d0;margin-bottom:6px}
-#phClose{
-  position:absolute;top:12px;right:14px;background:none;border:1px solid var(--line);
-  border-radius:7px;color:var(--dim);width:26px;height:26px;cursor:pointer
-}
-#phClose:hover{color:#fff;border-color:rgba(255,255,255,.3)}
 
 /* ---------- toast / loading / fatal ---------- */
 #toast{
@@ -240,30 +233,28 @@ input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;bac
     box-shadow:0 -8px 30px rgba(0,0,0,.7)
   }
   #panel.collapsed{height:46px;overflow:hidden}
-  #telemetry{
-    right:8px;bottom:auto;top:112px;width:auto;max-width:150px;
-    padding:8px 11px 9px
-  }
-  #telemetry .tHead{font-size:10px;letter-spacing:.18em;padding-bottom:6px}
-  #telemetry .tRow{font-size:10.5px;padding-top:5px;white-space:nowrap;gap:8px}
-  #telemetry .tRow b{font-size:10.5px}
-  #title h1{font-size:17px}
+  /* 标题与右上按钮不再挤同一行：标题第一行，按钮组下移到第二行右侧 */
+  #title{top:13px;left:16px}
+  #title h1{font-size:16px;letter-spacing:.34em}
+  #title .sub{font-size:9.5px;letter-spacing:.04em}
+  #topRight{top:58px;right:10px;gap:6px}
+  #topRight .chipBtn{padding:4px 9px;font-size:12px}
+  .chip{padding:4px 9px;font-size:12px}
   #hint{display:none}
-  #topRight{top:16px;right:12px}
   .volChip{display:none}
 }
 
 /* ---------- 伪横屏（手动方向切换） ---------- */
-/* 旋转容器：竖屏持机时把整幅画面转 90°，得到横屏构图；fixed 子元素会以它为包含块 */
+/* 只旋转 WebGL 画面，HUD（面板 / 遥测 / 按钮 / 滑条）保持正立。
+   这样滚动、拖动、点按都按屏幕方向工作，不会出现「界面转了 90°、滚动轴也跟着转」
+   导致面板竖直滑动失效的问题。飞船标记的位置在 app.js 里做坐标换算。 */
 #rotWrap{position:fixed;inset:0;width:100%;height:100%;overflow:hidden}
-body.rot #rotWrap{
+body.rot #scene{
+  inset:auto;left:0;top:0;
   width:100dvh;height:100dvw;
   transform:rotate(90deg) translateY(-100%);
   transform-origin:0 0;
 }
-/* 旋转后容器高 = 竖屏宽，面板高度不能再用 dvh，改用容器百分比 */
-body.rot #panel{max-height:46%}
-body.rot #panel.collapsed{max-height:46px}
 
 /* 折叠动画 + 更像按钮的折叠开关 */
 #panel{transition:max-height .3s ease}
@@ -295,7 +286,6 @@ body.rot #panel.collapsed{max-height:46px}
       <input type="range" id="rngMusicTop" min="0" max="100" step="1" value="55" aria-label="音乐音量">
       <b id="valMusicTop">55%</b>
     </div>
-    <button id="btnPhysics" class="chipBtn" title="物理模型说明">物理说明</button>
     <div id="fpsChip" class="chip">FPS <span id="fpsVal">--</span></div>
   </div>
 
@@ -361,31 +351,23 @@ body.rot #panel.collapsed{max-height:46px}
         <span class="switch"><input type="checkbox" id="chkTrail" checked><i></i></span>
       </label>
     </details>
-  </div>
 
-  <!-- 右下遥测 -->
-  <div id="telemetry">
-    <div class="tHead">遥测 TELEMETRY</div>
-    <div class="tRow"><span>渲染缓冲</span><b id="tRes">--</b></div>
-    <div class="tRow"><span>相机距离</span><b id="tCam">--</b></div>
-    <div class="tRow"><span>飞船 r</span><b id="tShipR">--</b></div>
-    <div class="tRow"><span>飞船速度</span><b id="tShipV">--</b></div>
-    <div class="tRow"><span>时间膨胀</span><b id="tDilation">--</b></div>
-    <div class="tRow"><span>轨道进动</span><b id="tPrecess">--</b></div>
-  </div>
+    <details class="sec" open>
+      <summary>遥测 TELEMETRY</summary>
+      <div id="telemetry">
+        <div class="tRow"><span>渲染缓冲</span><b id="tRes">--</b></div>
+        <div class="tRow"><span>相机距离</span><b id="tCam">--</b></div>
+        <div class="tRow"><span>飞船 r</span><b id="tShipR">--</b></div>
+        <div class="tRow"><span>飞船速度</span><b id="tShipV">--</b></div>
+        <div class="tRow"><span>时间膨胀</span><b id="tDilation">--</b></div>
+        <div class="tRow"><span>轨道进动</span><b id="tPrecess">--</b></div>
+      </div>
+    </details>
 
-  <!-- 底部提示 -->
-  <div id="hint">拖动 环绕视角（跟随模式下可绕飞船 360° 环视） · 滚轮 缩放 · 双指 触屏缩放 · <kbd>Space</kbd> 暂停 · <kbd>F</kbd> 跟随飞船</div>
-
-  <!-- 飞船标记 -->
-  <div id="marker"><i></i><span>RANGER</span></div>
-
-  <!-- 物理说明浮层 -->
-  <div id="physicsOverlay">
-    <div class="phBox">
-      <button id="phClose">✕</button>
-      <h2>物理模型</h2>
-      <div class="phSec"><h3>单位与几何</h3>
+    <details class="sec">
+      <summary>物理模型</summary>
+      <div id="physInline">
+<div class="phSec"><h3>单位与几何</h3>
         <p>采用几何单位 G=c=1，史瓦西半径 rs = 2GM/c² = 1（即 M = 1/2）。事件视界 r = 1rs；光子球 r = 1.5rs；黑洞阴影临界碰撞参数 b = √27·M ≈ 2.60rs；最内稳定圆轨道 ISCO r = 3rs（吸积盘内缘）。</p>
       </div>
       <div class="phSec"><h3>引力透镜 — 零测地线积分</h3>
@@ -403,8 +385,15 @@ body.rot #panel.collapsed{max-height:46px}
       <div class="phSec"><h3>尺度与简化</h3>
         <p>按 Gargantua（M ≈ 1.08×10⁸ M☉，自旋 a≈0.6，rs ≈ 1.97 AU）量级呈现；飞船与盘厚度为可视化放大。简化说明：透镜用史瓦西度规精确积分（完整 Kerr 框架拖曳的射线追踪未包含，自旋通过盘的转动与多普勒不对称体现）；盘近似光学薄、单温黑体，温度/亮度剖面与双相位纹理为视觉近似（严格薄盘温度 ∝ r^(−3/4)，代码用 0.62 次幂软化）；相机按坐标观测者处理，未做局部静态参考系的像差、相机处引力蓝移归一；飞船与轨迹线为 HUD 式叠加，未参与透镜折射，穿越盘面也不与盘物质碰撞；引力波衰减为演示加速的绝热近似。</p>
       </div>
-    </div>
+      </div>
+    </details>
   </div>
+
+  <!-- 底部提示 -->
+  <div id="hint">拖动 环绕视角（跟随模式下可绕飞船 360° 环视） · 滚轮 缩放 · 双指 触屏缩放 · <kbd>Space</kbd> 暂停 · <kbd>F</kbd> 跟随飞船</div>
+
+  <!-- 飞船标记 -->
+  <div id="marker"><i></i><span>RANGER</span></div>
 
   <!-- toast / loading -->
   <div id="toast"></div>
@@ -1769,15 +1758,26 @@ function main() {
     o1.start(); o2.start(); lfo.start();
   }
 
+  /* 空气层：原来是满带宽白噪（高频嘶声明显）。
+     改为「一阶低通白噪（粉红化）→ 1200Hz 低通 → 600Hz 带通 → 低增益 + 缓慢起伏」，
+     能量集中到低频，听感是缓慢的空气流动，不再是沙沙的噪声底。 */
   function buildAir(ctx, out) {
     var len = Math.floor(ctx.sampleRate * 2);
     var buf = ctx.createBuffer(1, len, ctx.sampleRate);
     var d = buf.getChannelData(0);
-    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    var last = 0;
+    for (var i = 0; i < len; i++) {
+      last = last * 0.92 + (Math.random() * 2 - 1) * 0.08;
+      d[i] = last * 4.5;   /* 补偿一阶低通造成的幅度损失 */
+    }
     var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
-    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 750; bp.Q.value = 0.6;
-    var g = ctx.createGain(); g.gain.value = 0.016;
-    src.connect(bp); bp.connect(g); g.connect(out); src.start();
+    var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1200; lp.Q.value = 0.4;
+    var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 600; bp.Q.value = 0.8;
+    var g = ctx.createGain(); g.gain.value = 0.0075;
+    var lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.06;
+    var lg = ctx.createGain(); lg.gain.value = 0.0022;   /* 低频缓慢呼吸，避免恒定嘶声 */
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    src.connect(lp); lp.connect(bp); bp.connect(g); g.connect(out); src.start();
   }
 
   function playChord(freqs, start, dur) {
@@ -1995,12 +1995,6 @@ function main() {
       $('panelToggle').textContent = $('panel').classList.contains('collapsed') ? '⌄ 展开' : '⌃ 收起';
     }
   });
-  $('btnPhysics').addEventListener('click', function () { $('physicsOverlay').classList.add('open'); });
-  $('phClose').addEventListener('click', function () { $('physicsOverlay').classList.remove('open'); });
-  $('physicsOverlay').addEventListener('click', function (e) {
-    if (e.target.id === 'physicsOverlay') $('physicsOverlay').classList.remove('open');
-  });
-
   window.addEventListener('keydown', function (e) {
     if (e.code === 'Space') {
       e.preventDefault();
@@ -2013,7 +2007,9 @@ function main() {
     } else if (e.code === 'KeyM') {
       setMusicEnabled(!music.enabled);
     } else if (e.code === 'Escape') {
-      $('physicsOverlay').classList.remove('open');
+      /* 物理说明已并入面板，Esc 改为收起控制面板 */
+      $('panel').classList.add('collapsed');
+      $('panelToggle').textContent = '⌄ 展开';
     }
   });
 
@@ -2050,8 +2046,14 @@ function main() {
       var vs = viewSize();
       var mx = (proj.x + 1) / 2 * vs.w;
       var my = (1 - proj.y) / 2 * vs.h;
-      marker.style.left = mx + 'px';
-      marker.style.top = my + 'px';
+      if (isRot) {
+        /* 画面旋转 90°、HUD 正立：画面坐标 (mx,my) → 屏幕坐标 */
+        marker.style.left = (vs.h - my) + 'px';
+        marker.style.top = mx + 'px';
+      } else {
+        marker.style.left = mx + 'px';
+        marker.style.top = my + 'px';
+      }
       marker.style.opacity = shipOccAlpha;
     } else {
       marker.style.opacity = 0;
