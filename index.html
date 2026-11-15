@@ -26,6 +26,10 @@ body{
 #scene{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 #scene.dragging{cursor:grabbing}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+/* HUD 内部层级：#marker(飞船标记) 属于画面叠加层，必须压在控件之下；
+   之前两者都没写 z-index，marker 在 DOM 里靠后，于是盖在了控制面板上面 */
+#marker{z-index:1}
+#title,#topRight,#panel,#hint{z-index:10}
 #hud > *{pointer-events:none}
 #panel,#topRight .chipBtn{pointer-events:auto}
 
